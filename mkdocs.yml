@@ -1,0 +1,77 @@
+site_name: "Zero→Hero Interview — Math‑Genius Edition"
+site_description: "A complete, opinionated prep repository for senior/principal coding + system design interviews."
+site_author: "You"
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - toc.integrate
+
+docs_dir: docs
+
+plugins:
+  - search
+
+extra_javascript:
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
+  - mermaid-init.js
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - 'Part 1: Coding':
+      - '01: Two Sum': 'part1-coding/01-hash-two-sum/README.md'
+      - '02: Longest Substring': 'part1-coding/02-sliding-window-longest-substring/README.md'
+      - '03: BFS Level Order': 'part1-coding/03-bfs-level-order/README.md'
+      - '04: Merge Intervals': 'part1-coding/04-intervals-merge/README.md'
+      - '05: Climbing Stairs': 'part1-coding/05-dp-climbing-stairs/README.md'
+      - '06: Course Schedule': 'part1-coding/06-toposort-course-schedule/README.md'
+      - '07: Meeting Rooms': 'part1-coding/07-heap-meeting-rooms/README.md'
+      - '08: Advanced Patterns': 'part1-coding/08-advanced-patterns/README.md'
+      - '10: Segment Tree': 'part1-coding/10-segment-tree-range-query/README.md'
+  - 'Part 2: System Design':
+      - 'Overview': 'part2-system-design/README.md'
+      - '01: Foundations': 'part2-system-design/01-foundations/README.md'
+      - '02: Caching, LB, Queues': 'part2-system-design/02-caching-lb-queues/README.md'
+      - '03: Sharding & Replication': 'part2-system-design/03-sharding-replication-quorums/README.md'
+      - '04: Observability': 'part2-system-design/04-observability-reliability-security/README.md'
+      - '05: Cloud Mapping': 'part2-system-design/05-cloud-mapping/README.md'
+      - '06: Case Studies': 'part2-system-design/06-case-studies/README.md'
+      - '07: Failure Engineering': 'part2-system-design/07-failure-engineering/README.md'
+      - '08: Modern Patterns': 'part2-system-design/08-modern-patterns/README.md'
+      - '09: War Stories': 'part2-system-design/09-war-stories/README.md'
+      - '10: FAANG Deep Dives': 'part2-system-design/10-faang-deep-dives/README.md'
+      - '11: ML Systems': 'part2-system-design/11-ml-systems/README.md'
+  - 'Part 3: Execution':
+      - '01: 8-Week Schedule': 'part3-execution/01-8-week-schedule.md'
+      - '02: Mock Rubrics': 'part3-execution/02-mock-rubrics.md'
+      - '03: Mistake Log': 'part3-execution/03-mistake-log-template.md'
+      - '04: Cheatsheets': 'part3-execution/04-cheatsheets.md'
+      - '05: Practice Set': 'part3-execution/05-practice-set.md'
+      - '06: FAANG Prep': 'part3-execution/06-faang-specific-prep.md'
