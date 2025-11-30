@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime
@@ -8,8 +9,8 @@ import requests
 
 API_ROOT = "https://api.github.com"
 OWNER = "hatan4ik"
-TAG_NAME = "last"
-RELEASE_NAME = "last"
+INITIAL_TAG = "v0.1.0"
+SEMVER_RE = re.compile(r"^v?(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)$")
 
 
 def get_github_token():
@@ -76,6 +77,68 @@ def get_branch_head(owner, repo, branch, token):
     return None
 
 
+def fetch_tags(owner, repo, token):
+    headers = auth_headers(token)
+    tags = []
+    page = 1
+
+    while True:
+        response = requests.get(
+            f"{API_ROOT}/repos/{owner}/{repo}/tags",
+            headers=headers,
+            params={"per_page": 100, "page": page},
+            timeout=30,
+        )
+
+        if response.status_code != 200:
+            print(f"❌ {repo}: Failed to fetch tags (status {response.status_code})")
+            print(response.text)
+            break
+
+        batch = response.json()
+        if not batch:
+            break
+
+        tags.extend(batch)
+        if len(batch) < 100:
+            break
+        page += 1
+
+    return tags
+
+
+def highest_semver_tag(tags):
+    best_value = None
+    best_tag = None
+
+    for tag in tags:
+        name = tag.get("name", "")
+        match = SEMVER_RE.match(name)
+        if not match:
+            continue
+
+        major, minor, patch = (int(match.group("major")), int(match.group("minor")), int(match.group("patch")))
+        value = (major, minor, patch)
+        if best_value is None or value > best_value:
+            best_value = value
+            best_tag = name
+
+    return best_tag
+
+
+def next_tag_name(tags):
+    current = highest_semver_tag(tags)
+    if not current:
+        return INITIAL_TAG
+
+    match = SEMVER_RE.match(current)
+    has_v_prefix = current.startswith("v")
+    major, minor, patch = (int(match.group("major")), int(match.group("minor")), int(match.group("patch")))
+    new_patch = patch + 1
+    prefix = "v" if has_v_prefix else ""
+    return f"{prefix}{major}.{minor}.{new_patch}"
+
+
 def ensure_tag(owner, repo, tag_name, target_sha, token):
     headers = auth_headers(token)
     create_response = requests.post(
@@ -108,10 +171,10 @@ def ensure_tag(owner, repo, tag_name, target_sha, token):
     return None
 
 
-def ensure_release(owner, repo, tag_name, branch, target_sha, token):
+def ensure_release(owner, repo, tag_name, release_name, branch, target_sha, token):
     headers = auth_headers(token)
     release_body = (
-        f"Automated '{RELEASE_NAME}' release from {branch} @ {target_sha[:7]} "
+        f"Automated '{release_name}' release from {branch} @ {target_sha[:7]} "
         f"on {datetime.utcnow().isoformat()}Z."
     )
 
@@ -129,7 +192,7 @@ def ensure_release(owner, repo, tag_name, branch, target_sha, token):
             json={
                 "tag_name": tag_name,
                 "target_commitish": branch,
-                "name": RELEASE_NAME,
+                "name": release_name,
                 "body": release_body,
                 "draft": False,
                 "prerelease": False,
@@ -155,7 +218,7 @@ def ensure_release(owner, repo, tag_name, branch, target_sha, token):
         json={
             "tag_name": tag_name,
             "target_commitish": branch,
-            "name": RELEASE_NAME,
+            "name": release_name,
             "body": release_body,
             "draft": False,
             "prerelease": False,
@@ -192,20 +255,35 @@ def main():
             print(f"⚠️  {name}: Skipped (archived or disabled)")
             continue
 
+        tags = fetch_tags(OWNER, name, token)
+        prev_tag = highest_semver_tag(tags)
+        tag_name = next_tag_name(tags)
+        release_name = tag_name
+
         branch = repo.get("default_branch") or "main"
         head_sha = get_branch_head(OWNER, name, branch, token)
         if not head_sha:
             continue
 
-        tag_result = ensure_tag(OWNER, name, TAG_NAME, head_sha, token)
+        print(f"🔖 {name}: Using tag '{tag_name}' (previous semver tag: {prev_tag or 'none'})")
+
+        tag_result = ensure_tag(OWNER, name, tag_name, head_sha, token)
         if not tag_result:
             continue
 
-        release_result = ensure_release(OWNER, name, TAG_NAME, branch, head_sha, token)
+        release_result = ensure_release(
+            OWNER,
+            name,
+            tag_name,
+            release_name,
+            branch,
+            head_sha,
+            token,
+        )
         if not release_result:
             continue
 
-        print(f"✅ {name}: tag '{TAG_NAME}' {tag_result}, release '{RELEASE_NAME}' {release_result}")
+        print(f"✅ {name}: tag '{tag_name}' {tag_result}, release '{release_name}' {release_result}")
 
     print("\n🎉 Done.")
 
