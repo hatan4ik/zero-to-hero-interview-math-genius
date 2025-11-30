@@ -47,8 +47,8 @@ def cleanup_repo(owner, repo_name, token):
         print(f"Batch complete. Checking for more...")
 
 def main():
-    owner = "hatan4ik"
-    repo_name = "Top-10-CI-CD-SecurityRisks"
+    owner = ""
+    repo_name = ""
     token = get_github_token()
     
     print(f"🧹 Cleaning {owner}/{repo_name}...")
